@@ -21,9 +21,19 @@ const CursorTrigger = function CursorTrigger({
   const hoverTriggerRef = useRef<HTMLDivElement>(null);
 
   const handleOnMouseEnter = () => {
-    if (type === 'hover')
-      changeMouseType('hover', hoverTriggerRef.current ?? undefined);
-    else if (type === 'pointer') changeMouseType('pointer', text);
+    switch (type) {
+      case 'hover':
+        changeMouseType('hover', hoverTriggerRef.current ?? undefined);
+        break;
+      case 'pointer':
+        changeMouseType('pointer', text);
+        break;
+      case 'text':
+        changeMouseType('text');
+        break;
+      default:
+        break;
+    }
   };
 
   const handleOnMouseLeave = () => {

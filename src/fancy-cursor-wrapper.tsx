@@ -5,9 +5,10 @@ import { CursorRef, FancyCursor } from './fancy-cursor';
 type FancyMouseWrapperProps = {
   children: React.ReactNode;
   color?: string;
+  cursorSize?: number;
 };
 
-const FancyCursorWrapper = ({ children, color }: FancyMouseWrapperProps) => {
+const FancyCursorWrapper = ({ children, color, cursorSize }: FancyMouseWrapperProps) => {
   const [xPosition, setXPosition] = useState(0);
   const cursorRef = useRef<CursorRef>(null);
   const [yPosition, setYPosition] = useState(0);
@@ -16,6 +17,7 @@ const FancyCursorWrapper = ({ children, color }: FancyMouseWrapperProps) => {
     if (!cursorRef.current) return;
 
     const { type, element, text } = event.detail;
+    console.log('received event', event.detail)
     cursorRef.current.setCursorType(type);
 
     cursorRef.current.setHoverElement(element);
@@ -40,7 +42,7 @@ const FancyCursorWrapper = ({ children, color }: FancyMouseWrapperProps) => {
   return (
     <>
       {children}
-      <FancyCursor color={color} ref={cursorRef} x={xPosition} y={yPosition} />
+      <FancyCursor color={color} ref={cursorRef} x={xPosition} y={yPosition} size={cursorSize} />
     </>
   );
 };

@@ -25,12 +25,12 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 10px;
-  height: 10px;
+  width: var(--cursor-size);
+  height: var(--cursor-size);
   border-radius: 50%;
   background-color: transparent;
   z-index: 99;
-  /* transform: translate(-50%, -50%); */
+  transform: translate(-50%, -50%);
   pointer-events: none;
   transition-property: border-radius, opacity, background-color, transform, mix-blend-mode;
   /* transition-property: all; */
@@ -71,6 +71,7 @@
 .cursor.text::before,
 .cursor.text::after {
   transform: scale(1);
+  border-color: blue;
   transition: transform 0.3s ease-in-out 50ms;
 }
 

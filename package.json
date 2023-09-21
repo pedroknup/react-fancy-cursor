@@ -19,9 +19,6 @@
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
-  "peerDependencies": {
-    "react": ">=16"
-  },
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -40,7 +37,6 @@
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
     "husky": "^8.0.3",
-    "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^9.0.0",

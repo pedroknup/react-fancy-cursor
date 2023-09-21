@@ -16,6 +16,7 @@ type FancyMouseProps = {
   x: number;
   y: number;
   color?: string;
+  size?: number;
 };
 export type CursorRef = {
   setCursorType: (cursorType: CursorTypes) => void;
@@ -26,7 +27,7 @@ export type CursorRef = {
 const BASE_DURATION = 0.3;
 
 const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
-  { x, y, color },
+  { x, y, color, size = 10 },
   ref
 ) {
   const [cursorType, setCursorType] = useState<CursorTypes>('default');
@@ -41,6 +42,13 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const cursorRefElement = cursorRef?.current;
     if (!cursorRefElement) return;
 
+    cursorRefElement.style.setProperty('--cursor-size', `${size}px`);
+  }, [size]);
+
+  useEffect(() => {
+    const cursorRefElement = cursorRef?.current;
+    if (!cursorRefElement) return;
+
     cursorRefElement.style.setProperty('--cursor-color', color ?? 'red');
   }, [color]);
 
@@ -50,15 +58,20 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     if (cursorType === 'hover') return;
 
-    const isPointer = cursorType === 'pointer';
-    const isDefault = cursorType === 'default';
-    const normalization = isPointer ? 50 : isDefault ? 5 : 0;
-    const targetX = x - normalization;
-    const targetY = y - normalization;
+    KUTE.to(
+      cursorRefElement,
+      { left: x, top: y },
+      { duration: 0.1, delay: 0.1, ease: 'power4' }
+    ).start();
 
-    // cursorRef.current?.style.setProperty('left', `${targetX}px`);
-    // cursorRef.current?.style.setProperty('top', `${targetY}px`);
-    KUTE.to(cursorRefElement, { left: targetX, top: targetY }, { duration: 0.1, delay: 0.1, ease: 'power4' }).start();
+    //  cursorRef.current?.style.setProperty(
+    //    'left',
+    //    `${x}px`
+    //  );
+    //  cursorRef.current?.style.setProperty(
+    //    'top',
+    //    `${y}px`
+    //  );
   }, [x, y]);
 
   const getPosition = () => {
@@ -72,23 +85,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     };
   };
 
-  useEffect(() => {
-    if (focusedElementRef.current) {
-      const buttonClientRect =
-        focusedElementRef.current.getBoundingClientRect();
-      const halfWidth = (buttonClientRect?.width ?? 0) / 2;
-      const halfHeight = (buttonClientRect?.height ?? 0) / 2;
-      const middleX = (buttonClientRect?.x ?? 0) + halfWidth;
-      const middleY = (buttonClientRect?.y ?? 0) + halfHeight;
-    }
-  }, [focusedElementRef, cursorType]);
-
   const handleOnMouseMove = useCallback((e: MouseEvent) => {
     if (focusedElementRef.current) {
       const currentX = e.clientX;
       const currentY = e.clientY;
-      const buttonClientRect =
-        focusedElementRef.current.getBoundingClientRect();
+      const buttonClientRect = focusedElementRef.current.getBoundingClientRect();
       const halfWidth = (buttonClientRect?.width ?? 0) / 2;
       const halfHeight = (buttonClientRect?.height ?? 0) / 2;
       const middleX = (buttonClientRect?.x ?? 0) + halfWidth;
@@ -98,30 +99,30 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
       cursorRef.current?.style.setProperty(
         'left',
-        `${buttonClientRect.left - xDistance * 5}px`
+        `${buttonClientRect.left + halfWidth - xDistance * 5}px`
       );
       cursorRef.current?.style.setProperty(
         'top',
-        `${buttonClientRect.top - yDistance * 5}px`
+        `${buttonClientRect.top + halfHeight - yDistance * 5}px`
       );
     }
   }, []);
 
   useEffect(() => {
+    console.log('triggered', cursorType);
     const cursorRefElement = cursorRef?.current;
     if (!cursorRefElement) return;
 
     if (cursorType === 'default') {
-      // change to default
       const targetData = {
-        width: 10,
-        height: 10,
-        left: x - 5,
-        top: y - 5,
+        width: size,
+        height: size,
+        // left: x - size / 2,
+        // top: y - size / 2,
       };
 
       const options = {
-        duration: 100,
+        duration: 200,
       };
       const tween = KUTE.to(cursorRefElement, targetData, options);
       tween.start();
@@ -130,18 +131,12 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       if (!targetElement) return;
 
       const rect = targetElement.getBoundingClientRect();
-      const top = rect.top + window.scrollY;
-      const bottom = rect.bottom + window.scrollY;
-      const left = rect.left + window.scrollX;
-      const right = rect.right + window.scrollX;
       const width = rect.width;
       const height = rect.height;
 
       const targetData = {
         width,
         height,
-        left,
-        top,
       };
 
       const options = {
@@ -150,16 +145,17 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       };
       KUTE.to(cursorRefElement, targetData, options).start();
     } else if (cursorType === 'text') {
-      // const action = changeCursorAction({
-      //   cursorType: 'text',
-      // });
-      // context?.dispatch(action);
-      // const action2 = changeCursorSizeAction({
-      //   width: 0.5,
-      //   height: 20,
-      //   borderRadius: '0',
-      // });
-      // context?.dispatch(action2);
+      console.log('here');
+      const targetData = {
+        width: 2,
+        height: 20,
+      };
+
+      const options = {
+        duration: 100,
+        ease: 'power3',
+      };
+      KUTE.to(cursorRefElement, targetData, options).start();
     } else if (cursorType === 'pointer') {
       const targetData = {
         width: 100,
@@ -179,17 +175,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       animateTextOut();
     }
   }, [cursorType]);
-
-  useEffect(() => {
-    window.addEventListener('mousemove', handleOnMouseMove);
-    if (!cursorElement) return;
-
-    // gsap.set(cursorElement, { xPercent: -50, yPercent: -50 });
-
-    return () => {
-      window.removeEventListener('mousemove', handleOnMouseMove);
-    };
-  }, [cursorElement, handleOnMouseMove]);
 
   useImperativeHandle(ref, () => ({
     setCursorType: (cursorType: CursorTypes) => {
@@ -234,7 +219,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     if (!textRefElement || !cursorRefElement || !textContainerElement) return;
 
-    console.log('animating text out');
     KUTE.to(
       textRefElement,
       {
