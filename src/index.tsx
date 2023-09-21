@@ -1,11 +1,8 @@
-import * as React from 'react';
+import { FancyCursorWrapper, changeMouseType } from './fancy-cursor-wrapper';
+import { CursorTrigger } from './cursor-trigger';
 
-const normalFunction = () => {
-  console.log('hello world')
-}
-// Delete me
-const Thing = () => {
-  return <div>the snozzberries taste like snozzberries</div>;
-};
+export { FancyCursorWrapper, changeMouseType, CursorTrigger };
 
-export { Thing, normalFunction };
+// import {EmptyBox} from './empty-box';
+
+// export { EmptyBox};

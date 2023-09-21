@@ -35,17 +35,6 @@
   },
   "name": "react-fancy-cursor",
   "author": "Pedro Knup",
-  "module": "dist/react-fancy-cursor.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/react-fancy-cursor.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/react-fancy-cursor.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^9.0.0",
     "@types/react": "^18.2.22",
@@ -53,9 +42,13 @@
     "husky": "^8.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^9.0.0",
     "tsdx": "^0.14.1",
     "tslib": "^2.6.2",
     "typescript": "^3.9.10"
+  },
+  "dependencies": {
+    "kute.js": "^2.2.4"
   }
 }
