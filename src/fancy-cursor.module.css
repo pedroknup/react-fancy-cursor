@@ -39,7 +39,6 @@
   will-change: transform;
   overflow: hidden;
   border: 4px solid var(--cursor-color);
-  /* border: 4px solid yellow !important; */
 }
 
 .cursor::before,

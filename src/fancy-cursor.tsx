@@ -64,26 +64,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       { duration: 0.1, delay: 0.1, ease: 'power4' }
     ).start();
 
-    //  cursorRef.current?.style.setProperty(
-    //    'left',
-    //    `${x}px`
-    //  );
-    //  cursorRef.current?.style.setProperty(
-    //    'top',
-    //    `${y}px`
-    //  );
   }, [x, y]);
-
-  const getPosition = () => {
-    if (!cursorRef.current) throw new Error('Cursor ref not found');
-
-    const { x, y } = cursorRef.current?.getBoundingClientRect();
-
-    return {
-      x,
-      y,
-    };
-  };
 
   const handleOnMouseMove = useCallback((e: MouseEvent) => {
     if (focusedElementRef.current) {
@@ -109,7 +90,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   }, []);
 
   useEffect(() => {
-    console.log('triggered', cursorType);
     const cursorRefElement = cursorRef?.current;
     if (!cursorRefElement) return;
 
@@ -117,8 +97,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       const targetData = {
         width: size,
         height: size,
-        // left: x - size / 2,
-        // top: y - size / 2,
       };
 
       const options = {
@@ -131,6 +109,10 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       if (!targetElement) return;
 
       const rect = targetElement.getBoundingClientRect();
+      const top = rect.top + window.screenY;
+      const bottom = rect.bottom + window.scrollY;
+      const left = rect.left + window.scrollX;
+      const right = rect.right + window.scrollX;
       const width = rect.width;
       const height = rect.height;
 
@@ -145,7 +127,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       };
       KUTE.to(cursorRefElement, targetData, options).start();
     } else if (cursorType === 'text') {
-      console.log('here');
       const targetData = {
         width: 2,
         height: 20,
@@ -175,6 +156,15 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       animateTextOut();
     }
   }, [cursorType]);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleOnMouseMove);
+    if (!cursorElement) return;
+
+    return () => {
+      window.removeEventListener('mousemove', handleOnMouseMove);
+    };
+  }, [cursorElement, handleOnMouseMove]);
 
   useImperativeHandle(ref, () => ({
     setCursorType: (cursorType: CursorTypes) => {
