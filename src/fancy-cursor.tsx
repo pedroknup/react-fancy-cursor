@@ -1,21 +1,18 @@
-import styles from './fancy-cursor.module.css';
-import {
+import React, {
   useCallback,
-  // useContext,
   useEffect,
   useRef,
   forwardRef,
   useImperativeHandle,
   useState,
 } from 'react';
-import KUTE from 'kute.js';
-import React from 'react';
-type CursorTypes = 'default' | 'pointer' | 'text' | 'hover' | 'drag' | 'none';
-import * as THREE from 'three';
-import gsap, { Power0 } from 'gsap';
-import { interpolate } from 'flubber'; //
 import * as d3 from 'd3';
-
+import KUTE from 'kute.js';
+import { Power0 } from 'gsap';
+import { interpolate } from 'flubber'; //
+import { CursorTypes } from './types';
+import styles from './fancy-cursor.module.css';
+import { DebugPanel } from './debug-panel';
 type FancyMouseProps = {
   x: number;
   y: number;
@@ -29,37 +26,8 @@ export type CursorRef = {
 };
 
 const BASE_DURATION = 0.3;
-
-function replaceMNumbers(
-  inputString: string,
-  newX: number,
-  newY: number
-): string {
-  // Define the regex pattern to match the M numbers
-  const regex = /^M\s+([\d.]+)\s+([\d.]+)$/m;
-
-  // Use the regex to find a match in the input string
-  const firstLine = inputString.trim().split('\n')[0];
-  const otherLines = inputString
-    .trim()
-    .split('\n')
-    .slice(1)
-    .join('\n');
-  const match = firstLine.match(regex);
-
-  if (match) {
-    // Extract the original M numbers from the match
-    const originalX: number = parseFloat(match[1]);
-    const originalY: number = parseFloat(match[2]);
-
-    // Replace the original M numbers with the new ones
-    const replacedFirstLine = `M ${newX} ${newY}`;
-    return `${replacedFirstLine}\n${otherLines}`;
-  } else {
-    // If no match is found, return the original input string
-    return inputString;
-  }
-}
+const PARALLAX_STRENGTH = 5;
+const CIRCLE_DIAMETER = 20;
 
 const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   { x, y, color, size = 10 },
@@ -68,9 +36,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   const [cursorType, setCursorType] = useState<CursorTypes>('default');
   const isTransitioningRef = useRef<boolean>(true);
   const [text, setText] = useState<string>('');
-  const [key, setKey] = useState<number>(0);
   const cursorRef = useRef<HTMLDivElement>(null);
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const cursorElement = cursorRef?.current;
@@ -103,9 +70,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     path.setAttribute('fill', 'transparent');
     path.setAttribute('stroke-width', '4');
 
-    // path.style.transform = `translate(${relativeLeft -
-    //   diameter / 2}px, ${relativeTop - diameter / 2}px)`;
-
     return path;
   }
 
@@ -118,10 +82,10 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const currentX = x;
     const currentY = y;
     const buttonClientRect = rect;
-    const halfWidth = (buttonClientRect?.width) / 2;
-    const halfHeight = (buttonClientRect?.height) / 2;
-    const middleX = (buttonClientRect?.x) + halfWidth;
-    const middleY = (buttonClientRect?.y) + halfHeight;
+    const halfWidth = buttonClientRect?.width / 2;
+    const halfHeight = buttonClientRect?.height / 2;
+    const middleX = buttonClientRect?.x + halfWidth;
+    const middleY = buttonClientRect?.y + halfHeight;
     const xDistance = (middleX - currentX) / halfWidth;
     const yDistance = (middleY - currentY) / halfHeight;
 
@@ -136,7 +100,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     L ${relativeLeft} ${relativeTop + buttonClientRect?.height}
     Z`;
 
-    if (!canvasContainerRef.current) return;
+    if (!svgContainerRef.current) return;
 
     const pathElement = document.createElementNS(svgNS, 'path');
     pathElement.setAttribute('d', pathData);
@@ -158,7 +122,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     isTransitioningRef.current = true;
 
-    console.log('transition started. It should not move (line 230)');
     d3.select(cursorPathRef.current)
       .transition()
       .attrTween('d', function() {
@@ -167,7 +130,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       .duration(100)
       .on('end', () => {
         isTransitioningRef.current = false;
-        console.log('transition ended');
       });
   }, [focusedElementRef.current, x, y]);
 
@@ -175,14 +137,14 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
 
-    if (!canvasContainerRef.current) return;
+    if (!svgContainerRef.current) return;
 
     const padding = 20;
 
-    canvasContainerRef.current.style.left = `${padding}px`;
-    canvasContainerRef.current.style.top = `${padding}px`;
-    canvasContainerRef.current.style.width = `${padding}px`;
-    canvasContainerRef.current.style.height = `${padding}px`;
+    svgContainerRef.current.style.left = `${padding}px`;
+    svgContainerRef.current.style.top = `${padding}px`;
+    svgContainerRef.current.style.width = `${padding}px`;
+    svgContainerRef.current.style.height = `${padding}px`;
 
     svg.style.left = `${0}px`;
     svg.style.top = `${0}px`;
@@ -191,8 +153,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     svg.id = 'test';
     const pathCursorCircle = createCirclePath(20, undefined);
     svg.appendChild(pathCursorCircle);
-    canvasContainerRef.current?.children[0]?.remove();
-    canvasContainerRef.current?.appendChild(svg);
+    svgContainerRef.current?.children[0]?.remove();
+    svgContainerRef.current?.appendChild(svg);
 
     cursorPathRef.current = pathCursorCircle;
     svgElement.current = svg;
@@ -229,10 +191,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         const middleY = (focusedElementRect?.y ?? 0) + halfHeight;
         const xDistance = (middleX - currentX) / halfWidth;
         const yDistance = (middleY - currentY) / halfHeight;
-        
-        const parallaxStrength = 5;
-        const relativeLeft = focusedElementRect.left - xDistance * parallaxStrength;
-        const relativeTop = focusedElementRect.top - yDistance * parallaxStrength;
+
+        const relativeLeft =
+          focusedElementRect.left - xDistance * PARALLAX_STRENGTH;
+        const relativeTop =
+          focusedElementRect.top - yDistance * PARALLAX_STRENGTH;
 
         const pathData = `
           M ${relativeLeft} ${relativeTop}
@@ -274,11 +237,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
   useEffect(() => {
     const cursorRefElement = cursorRef?.current;
-    // if (!cursorRefElement) return;
 
-    console.log('changed cursor type', cursorType);
     if (cursorType !== 'pointer') {
-      console.log('different');
       animateTextOut();
     }
 
@@ -294,8 +254,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       const tween = KUTE.to(cursorRefElement, targetData, options);
       tween.start();
 
-      const pathStart = canvasContainerRef.current?.children[0]?.children[1];
-      const pathEnd = canvasContainerRef.current?.children[0]?.children[0];
+      const pathStart = svgContainerRef.current?.children[0]?.children[1];
+      const pathEnd = svgContainerRef.current?.children[0]?.children[0];
 
       if (!pathStart || !pathEnd) return;
 
@@ -330,8 +290,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       const targetData = {
         width: 100,
         height: 100,
-        // left: x - 50,
-        // top: y - 50,
       };
 
       const options = {
@@ -413,21 +371,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   }, [cursorElement]);
 
   return (
-    <div className={styles.debug}>
-      {cursorType}
-      <br />
-      {text}
-      <br />
-      {x} - {y}
-      {/* <div className={`${styles.cursor} ${styles[cursorType]}`}>
-        <div className={styles.cursorText}>
-          <span></span>
-        </div>
-      </div> */}
+    <div>
+      <DebugPanel x={x} y={y} type={cursorType} text={text} />
       <div
-        className={`${styles['canvas-container']}`}
-        key={key}
-        ref={canvasContainerRef}
+        className={`${styles['svg-container']}`}
+        ref={svgContainerRef}
       />
       <div className={`${styles.cursor} ${styles[cursorType]}`} ref={cursorRef}>
         <div ref={textContainerRef} className={styles['cursor-text']}>
