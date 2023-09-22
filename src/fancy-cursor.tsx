@@ -43,19 +43,26 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   const textRef = useRef<HTMLSpanElement>(null);
   const cursorElement = cursorRef?.current;
   const focusedElementRef = useRef<any>(null);
+  const mainPath = useRef<any>(null);
+  const svgElement = useRef<any>(null);
 
-  function createCirclePath(diameter: number): any {
+  function createCirclePath(
+    diameter: number,
+    position: { x: number; y: number } | undefined
+  ): any {
     const svgNS = 'http://www.w3.org/2000/svg';
-    const rect = focusedElementRef.current?.getBoundingClientRect();
-    if (!rect) return null;
+    const rect = focusedElementRef.current?.getBoundingClientRect() ?? {
+      left: 0,
+      top: 0,
+    };
 
-    const relativeLeft = x - rect.left + diameter /2;
+    const relativeLeft = x - rect.left + diameter / 2;
     const relativeTop = y - rect.top + diameter;
 
     const path = document.createElementNS(svgNS, 'path');
 
     const pathData = `
-    M ${relativeLeft} ${relativeTop}
+    M ${position?.x ?? relativeLeft} ${position?.y ?? relativeTop}
     a ${diameter / 2},${diameter / 2} 0 1,1 ${diameter},0
     a ${diameter / 2},${diameter / 2} 0 1,1 -${diameter},0
   `;
@@ -70,6 +77,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     return path;
   }
 
+  const getRectangleAroundFocusedElement = useCallback(() => {
+    // const rect = focusedElementRef.current?.getBoundingClientRect();
+    // if (!rect) return null;
+  }, []);
+
   function createPathAroundUnion(
     element1: HTMLElement,
     element2: HTMLElement
@@ -78,17 +90,29 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const box2 = element2.getBoundingClientRect();
 
     const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg');
 
-    const path = document.createElementNS(svgNS, 'path');
     const boundingBox = element2.getBoundingClientRect();
 
     // Define the path data using the bounding box of the element
     const rect = focusedElementRef.current?.getBoundingClientRect();
     if (!rect) return null;
+    const padding = 20;
 
-    const relativeLeft = 20;
-    const relativeTop = 20;
+    const elementWidth = boundingBox.width + padding * 2;
+
+    console.log('width', elementWidth);
+
+    const elementHeight = boundingBox.height + padding * 2;
+
+    const relativeLeftCursor = x - rect.left;
+    const relativeTopCursor = y - rect.top;
+
+    console.log('relativeLeftCursor', relativeLeftCursor);
+    console.log('relativeTopCursor', relativeTopCursor);
+
+    let relativeLeft = boundingBox.left;
+    let relativeTop = boundingBox.top;
+    
     const pathData = `
     M ${relativeLeft} ${relativeTop}
     L ${relativeLeft + boundingBox.width} ${relativeTop}
@@ -97,95 +121,65 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     Z
 `;
 
-    path.setAttribute('d', pathData);
-    path.setAttribute('stroke', 'blue'); // Change the color as needed
-    path.setAttribute('fill', 'none');
-
     if (!canvasContainerRef.current) return;
 
-    const padding = 20;
+    const pathElement = document.createElementNS(svgNS, 'path');
+    pathElement.setAttribute('d', pathData);
+    pathElement.setAttribute('stroke', 'transparent'); // Change the color as needed
+    pathElement.setAttribute('fill', 'transparent');
+    pathElement.setAttribute('stroke-width', '4');
+    pathElement.id = 'delete-me';
 
-    canvasContainerRef.current.style.left = `${boundingBox.left - padding}px`;
-    canvasContainerRef.current.style.top = `${boundingBox.top - padding}px`;
-    canvasContainerRef.current.style.width = `${boundingBox.width +
-      padding * 2}px`;
-    canvasContainerRef.current.style.height = `${boundingBox.height +
-      padding * 2}px`;
+    svgElement.current.appendChild(pathElement);
 
-    svg.appendChild(path);
-    svg.style.left = `${boundingBox.left - padding}px`;
-    svg.style.top = `${boundingBox.top - padding}px`;
-    svg.style.width = `${boundingBox.width + padding * 2}px`;
-    svg.style.height = `${boundingBox.height + padding * 2}px`;
-    // svgContainer.appendChild(svg);
-    const pathCursorCircle = createCirclePath(20);
-    svg.appendChild(pathCursorCircle);
-    canvasContainerRef.current?.children[0]?.remove();
-    canvasContainerRef.current?.appendChild(svg);
+    const circlePath = mainPath.current;
 
-    const path1 = canvasContainerRef.current?.children[0]?.children[1];
-
-    const SVGPathValue: gsap.SVGPathValue = path?.getAttribute('d') ?? '';
-    const startSVGPathValue: gsap.SVGPathValue =
-      pathCursorCircle.getAttribute('d') ?? '';
+    if (!circlePath) return;
 
     const interpolator = interpolate(
-      pathCursorCircle.getAttribute('d'),
-      SVGPathValue
+      mainPath.current.getAttribute('d'),
+      pathData
     );
-    console.log(pathCursorCircle.getAttribute('d'));
-    console.log(SVGPathValue);
+    console.log(mainPath.current.getAttribute('d'));
+    console.log(pathData);
 
-    d3.select(path1)
+    d3.select(mainPath.current)
       .transition()
       .attrTween('d', function() {
         return interpolator;
       })
-      .duration(200)
-
+      .duration(200);
   }
 
-  // useEffect(() => {
-  //   const svgNS = 'http://www.w3.org/2000/svg';
-  //   const svg = document.createElementNS(svgNS, 'svg');
-  //   svg.setAttribute('width', '500px');
-  //   const path = document.createElementNS(svgNS, 'path');
-  //   const boundingBox = element2.getBoundingClientRect();
+  useEffect(() => {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    console.log('should add');
 
-  //   // Define the path data using the bounding box of the element
-  //   const pathData = `
-  //   M ${0} ${0}
-  //   L ${boundingBox.width} ${0}
-  //   L ${boundingBox.width} ${boundingBox.height}
-  //   L ${0} ${boundingBox.height}
-  //   Z
-  // `;
+    if (!canvasContainerRef.current) return;
+    console.log('should add 3');
 
-  //   path.setAttribute('d', pathData);
-  //   path.setAttribute('stroke', 'blue'); // Change the color as needed
-  //   path.setAttribute('fill', 'none');
+    const padding = 20;
 
-  //   console.log('boundingBox.width', boundingBox.width);
-  //   console.log('boundingBox.height', boundingBox.height);
+    canvasContainerRef.current.style.left = `${padding}px`;
+    canvasContainerRef.current.style.top = `${padding}px`;
+    canvasContainerRef.current.style.width = `${padding}px`;
+    canvasContainerRef.current.style.height = `${padding}px`;
 
-  //   if (!canvasContainerRef.current) return;
+    svg.style.left = `${0}px`;
+    svg.style.top = `${0}px`;
+    svg.style.width = `100vw`;
+    svg.style.height = `100vh`;
+    svg.id = 'test';
+    const pathCursorCircle = createCirclePath(20, undefined);
+    console.log('pathCursorCircle', pathCursorCircle);
+    svg.appendChild(pathCursorCircle);
+    canvasContainerRef.current?.children[0]?.remove();
+    canvasContainerRef.current?.appendChild(svg);
 
-  //   const padding = 20;
-
-  //   canvasContainerRef.current.style.left = `${boundingBox.left - padding}px`;
-  //   canvasContainerRef.current.style.top = `${boundingBox.top - padding}px`;
-  //   canvasContainerRef.current.style.width = `${boundingBox.width +
-  //     padding * 2}px`;
-  //   canvasContainerRef.current.style.height = `${boundingBox.height +
-  //     padding * 2}px`;
-
-  //   svg.appendChild(path);
-  //   svg.style.left = `${padding}px`;
-  //   svg.style.top = `${padding}px`;
-  //   // svgContainer.appendChild(svg);
-  //   canvasContainerRef.current?.children[0]?.remove();
-  //   canvasContainerRef.current?.appendChild(svg);
-  // }, []);
+    mainPath.current = pathCursorCircle;
+    svgElement.current = svg;
+  }, []);
 
   useEffect(() => {
     const cursorRefElement = cursorRef?.current;
@@ -212,6 +206,23 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       { left: x, top: y },
       { duration: 0.1, delay: 0.1, ease: 'power4' }
     ).start();
+
+    const SVG = svgElement.current;
+    if (!SVG) return;
+
+    const SVGRect = SVG.getBoundingClientRect();
+    const SVGWidth = SVGRect.width;
+    const centeredLeft = x - SVGWidth / 2;
+    const centeredTop = y - SVGWidth / 2;
+    mainPath.current?.style.setProperty('left', `${centeredLeft}px`);
+    mainPath.current?.style.setProperty('top', `${centeredTop}px`);
+    // edit the first line of the path
+    const path = createCirclePath(20, {
+      x: x - 10,
+      y: y - 0,
+    });
+
+    mainPath.current.setAttribute('d', path.getAttribute('d'));
   }, [x, y]);
 
   const handleOnMouseMove = useCallback((e: MouseEvent) => {
@@ -252,6 +263,32 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       };
       const tween = KUTE.to(cursorRefElement, targetData, options);
       tween.start();
+
+      const pathStart = canvasContainerRef.current?.children[0]?.children[1];
+      const pathEnd = canvasContainerRef.current?.children[0]?.children[0];
+      console.log('here', mainPath.current);
+      console.log('pathstart', pathStart);
+      console.log('pathend', pathEnd);
+
+      if (!pathStart || !pathEnd) return;
+
+      const interpolator = interpolate(
+        pathStart.getAttribute('d') ?? '',
+        pathEnd.getAttribute('d') ?? ''
+      );
+
+      d3.select(pathEnd)
+        .transition()
+        .attrTween('d', function() {
+          return interpolator;
+        })
+        .duration(200);
+
+      svgElement.current.querySelector('#delete-me')?.remove();
+      // svgElement.current.style.left = `${20}px`;
+      // svgElement.current.style.top = `${20}px`;
+      // svgElement.current.style.width = `${20 * 2}px`;
+      // svgElement.current.style.height = `${20 * 2}px`;
     } else if (cursorType === 'hover') {
       const targetElement = focusedElementRef.current;
       if (!targetElement) return;
