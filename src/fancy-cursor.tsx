@@ -30,11 +30,43 @@ export type CursorRef = {
 
 const BASE_DURATION = 0.3;
 
+function replaceMNumbers(
+  inputString: string,
+  newX: number,
+  newY: number
+): string {
+  // Define the regex pattern to match the M numbers
+  const regex = /^M\s+([\d.]+)\s+([\d.]+)$/m;
+
+  // Use the regex to find a match in the input string
+  const firstLine = inputString.trim().split('\n')[0];
+  const otherLines = inputString
+    .trim()
+    .split('\n')
+    .slice(1)
+    .join('\n');
+  const match = firstLine.match(regex);
+
+  if (match) {
+    // Extract the original M numbers from the match
+    const originalX: number = parseFloat(match[1]);
+    const originalY: number = parseFloat(match[2]);
+
+    // Replace the original M numbers with the new ones
+    const replacedFirstLine = `M ${newX} ${newY}`;
+    return `${replacedFirstLine}\n${otherLines}`;
+  } else {
+    // If no match is found, return the original input string
+    return inputString;
+  }
+}
+
 const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   { x, y, color, size = 10 },
   ref
 ) {
   const [cursorType, setCursorType] = useState<CursorTypes>('default');
+  const isTransitioningRef = useRef<boolean>(true);
   const [text, setText] = useState<string>('');
   const [key, setKey] = useState<number>(0);
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -77,49 +109,40 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     return path;
   }
 
-  const getRectangleAroundFocusedElement = useCallback(() => {
-    // const rect = focusedElementRef.current?.getBoundingClientRect();
-    // if (!rect) return null;
-  }, []);
-
-  function createPathAroundUnion(
-    element1: HTMLElement,
-    element2: HTMLElement
-  ): any {
-    const box1 = element1.getBoundingClientRect();
-    const box2 = element2.getBoundingClientRect();
-
+  const createPathAroundUnion = useCallback((): any => {
     const svgNS = 'http://www.w3.org/2000/svg';
-
-    const boundingBox = element2.getBoundingClientRect();
-
     // Define the path data using the bounding box of the element
     const rect = focusedElementRef.current?.getBoundingClientRect();
     if (!rect) return null;
     const padding = 20;
 
-    const elementWidth = boundingBox.width + padding * 2;
+    const elementWidth = rect.width + padding * 2;
 
-    console.log('width', elementWidth);
-
-    const elementHeight = boundingBox.height + padding * 2;
+    const elementHeight = rect.height + padding * 2;
 
     const relativeLeftCursor = x - rect.left;
     const relativeTopCursor = y - rect.top;
 
-    console.log('relativeLeftCursor', relativeLeftCursor);
-    console.log('relativeTopCursor', relativeTopCursor);
+    const currentX = x;
+    const currentY = y;
+    const buttonClientRect = rect;
+    const halfWidth = (buttonClientRect?.width ?? 0) / 2;
+    const halfHeight = (buttonClientRect?.height ?? 0) / 2;
+    const middleX = (buttonClientRect?.x ?? 0) + halfWidth;
+    const middleY = (buttonClientRect?.y ?? 0) + halfHeight;
+    const xDistance = (middleX - currentX) / halfWidth;
+    const yDistance = (middleY - currentY) / halfHeight;
 
-    let relativeLeft = boundingBox.left;
-    let relativeTop = boundingBox.top;
-    
+    const relativeLeft = rect.left - xDistance * 5;
+    const relativeTop = rect.top - yDistance * 5;
+
     const pathData = `
     M ${relativeLeft} ${relativeTop}
-    L ${relativeLeft + boundingBox.width} ${relativeTop}
-    L ${relativeLeft + boundingBox.width} ${relativeTop + boundingBox.height}
-    L ${relativeLeft} ${relativeTop + boundingBox.height}
-    Z
-`;
+    L ${relativeLeft + buttonClientRect?.width ?? 0} ${relativeTop}
+    L ${relativeLeft + buttonClientRect?.width ?? 0} ${relativeTop +
+      buttonClientRect?.height ?? 0}
+    L ${relativeLeft} ${relativeTop + buttonClientRect?.height ?? 0}
+    Z`;
 
     if (!canvasContainerRef.current) return;
 
@@ -127,7 +150,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     pathElement.setAttribute('d', pathData);
     pathElement.setAttribute('stroke', 'transparent'); // Change the color as needed
     pathElement.setAttribute('fill', 'transparent');
-    pathElement.setAttribute('stroke-width', '4');
+    pathElement.setAttribute('stroke-width', '1');
     pathElement.id = 'delete-me';
 
     svgElement.current.appendChild(pathElement);
@@ -140,24 +163,27 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       mainPath.current.getAttribute('d'),
       pathData
     );
-    console.log(mainPath.current.getAttribute('d'));
-    console.log(pathData);
 
+    isTransitioningRef.current = true;
+
+    console.log('transition started. It should not move (line 230)');
     d3.select(mainPath.current)
       .transition()
       .attrTween('d', function() {
         return interpolator;
       })
-      .duration(200);
-  }
+      .duration(100)
+      .on('end', () => {
+        isTransitioningRef.current = false;
+        console.log('transition ended');
+      });
+  }, [focusedElementRef.current, x, y]);
 
   useEffect(() => {
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
-    console.log('should add');
 
     if (!canvasContainerRef.current) return;
-    console.log('should add 3');
 
     const padding = 20;
 
@@ -172,7 +198,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     svg.style.height = `100vh`;
     svg.id = 'test';
     const pathCursorCircle = createCirclePath(20, undefined);
-    console.log('pathCursorCircle', pathCursorCircle);
     svg.appendChild(pathCursorCircle);
     canvasContainerRef.current?.children[0]?.remove();
     canvasContainerRef.current?.appendChild(svg);
@@ -199,54 +224,72 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const cursorRefElement = cursorRef?.current;
     if (!cursorRefElement) return;
 
-    if (cursorType === 'hover') return;
+    console.log('isTransitioning', isTransitioningRef.current);
 
-    KUTE.to(
-      cursorRefElement,
-      { left: x, top: y },
-      { duration: 0.1, delay: 0.1, ease: 'power4' }
-    ).start();
+    if (cursorType === 'hover') {
+      if (focusedElementRef.current && !isTransitioningRef.current) {
+        const currentX = x;
+        const currentY = y;
+        const buttonClientRect = focusedElementRef.current.getBoundingClientRect();
+        const halfWidth = (buttonClientRect?.width ?? 0) / 2;
+        const halfHeight = (buttonClientRect?.height ?? 0) / 2;
+        const middleX = (buttonClientRect?.x ?? 0) + halfWidth;
+        const middleY = (buttonClientRect?.y ?? 0) + halfHeight;
+        const xDistance = (middleX - currentX) / halfWidth;
+        const yDistance = (middleY - currentY) / halfHeight;
 
-    const SVG = svgElement.current;
-    if (!SVG) return;
+        cursorRef.current?.style.setProperty(
+          'left',
+          `${buttonClientRect.left + halfWidth - xDistance * 5}px`
+        );
+        cursorRef.current?.style.setProperty(
+          'top',
+          `${buttonClientRect.top + halfHeight - yDistance * 5}px`
+        );
 
-    const SVGRect = SVG.getBoundingClientRect();
-    const SVGWidth = SVGRect.width;
-    const centeredLeft = x - SVGWidth / 2;
-    const centeredTop = y - SVGWidth / 2;
-    mainPath.current?.style.setProperty('left', `${centeredLeft}px`);
-    mainPath.current?.style.setProperty('top', `${centeredTop}px`);
-    // edit the first line of the path
-    const path = createCirclePath(20, {
-      x: x - 10,
-      y: y - 0,
-    });
+        const path = mainPath.current;
+        if (!path) return;
 
-    mainPath.current.setAttribute('d', path.getAttribute('d'));
-  }, [x, y]);
+        const relativeLeft = buttonClientRect.left - xDistance * 5;
+        const relativeTop = buttonClientRect.top - yDistance * 5;
 
-  const handleOnMouseMove = useCallback((e: MouseEvent) => {
-    if (focusedElementRef.current) {
-      const currentX = e.clientX;
-      const currentY = e.clientY;
-      const buttonClientRect = focusedElementRef.current.getBoundingClientRect();
-      const halfWidth = (buttonClientRect?.width ?? 0) / 2;
-      const halfHeight = (buttonClientRect?.height ?? 0) / 2;
-      const middleX = (buttonClientRect?.x ?? 0) + halfWidth;
-      const middleY = (buttonClientRect?.y ?? 0) + halfHeight;
-      const xDistance = (middleX - currentX) / halfWidth;
-      const yDistance = (middleY - currentY) / halfHeight;
+        const pathData = `
+    M ${relativeLeft} ${relativeTop}
+    L ${relativeLeft + buttonClientRect?.width ?? 0} ${relativeTop}
+    L ${relativeLeft + buttonClientRect?.width ?? 0} ${relativeTop +
+          buttonClientRect?.height ?? 0}
+    L ${relativeLeft} ${relativeTop + buttonClientRect?.height ?? 0}
+    Z`;
+        path.setAttribute('d', pathData);
+        console.log('CHANGED');
+      }
+    } else {
+      if (!isTransitioningRef.current) 
+        isTransitioningRef.current = true;
+      KUTE.to(
+        cursorRefElement,
+        { left: x, top: y },
+        { duration: 0.1, delay: 0.1, ease: 'power4' }
+      ).start();
 
-      cursorRef.current?.style.setProperty(
-        'left',
-        `${buttonClientRect.left + halfWidth - xDistance * 5}px`
-      );
-      cursorRef.current?.style.setProperty(
-        'top',
-        `${buttonClientRect.top + halfHeight - yDistance * 5}px`
-      );
+      const SVG = svgElement.current;
+      if (!SVG) return;
+
+      const SVGRect = SVG.getBoundingClientRect();
+      const SVGWidth = SVGRect.width;
+      const centeredLeft = x - SVGWidth / 2;
+      const centeredTop = y - SVGWidth / 2;
+      mainPath.current?.style.setProperty('left', `${centeredLeft}px`);
+      mainPath.current?.style.setProperty('top', `${centeredTop}px`);
+      // edit the first line of the path
+      const path = createCirclePath(20, {
+        x: x - 10,
+        y: y - 0,
+      });
+
+      mainPath.current.setAttribute('d', path.getAttribute('d'));
     }
-  }, []);
+  }, [x, y, cursorType, focusedElementRef.current, isTransitioningRef.current]);
 
   useEffect(() => {
     const cursorRefElement = cursorRef?.current;
@@ -266,9 +309,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
       const pathStart = canvasContainerRef.current?.children[0]?.children[1];
       const pathEnd = canvasContainerRef.current?.children[0]?.children[0];
-      console.log('here', mainPath.current);
-      console.log('pathstart', pathStart);
-      console.log('pathend', pathEnd);
 
       if (!pathStart || !pathEnd) return;
 
@@ -282,37 +322,12 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         .attrTween('d', function() {
           return interpolator;
         })
-        .duration(200);
+        .duration(50)
+        .ease(Power0.easeNone);
 
       svgElement.current.querySelector('#delete-me')?.remove();
-      // svgElement.current.style.left = `${20}px`;
-      // svgElement.current.style.top = `${20}px`;
-      // svgElement.current.style.width = `${20 * 2}px`;
-      // svgElement.current.style.height = `${20 * 2}px`;
     } else if (cursorType === 'hover') {
-      const targetElement = focusedElementRef.current;
-      if (!targetElement) return;
-
-      const rect = targetElement.getBoundingClientRect();
-      const top = rect.top + window.screenY;
-      const bottom = rect.bottom + window.scrollY;
-      const left = rect.left + window.scrollX;
-      const right = rect.right + window.scrollX;
-      const width = rect.width;
-      const height = rect.height;
-
-      const targetData = {
-        width,
-        height,
-      };
-
-      const options = {
-        duration: 100,
-        ease: 'power3',
-      };
-      KUTE.to(cursorRefElement, targetData, options).start();
-
-      createPathAroundUnion(cursorRefElement, targetElement);
+      createPathAroundUnion();
     } else if (cursorType === 'text') {
       const targetData = {
         width: 2,
@@ -343,15 +358,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       animateTextOut();
     }
   }, [cursorType]);
-
-  useEffect(() => {
-    window.addEventListener('mousemove', handleOnMouseMove);
-    if (!cursorElement) return;
-
-    return () => {
-      window.removeEventListener('mousemove', handleOnMouseMove);
-    };
-  }, [cursorElement, handleOnMouseMove]);
 
   useImperativeHandle(ref, () => ({
     setCursorType: (cursorType: CursorTypes) => {
