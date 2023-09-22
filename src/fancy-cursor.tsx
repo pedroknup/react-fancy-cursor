@@ -141,16 +141,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       .attrTween('d', function() {
         return interpolator;
       })
-      .duration(500)
+      .duration(200)
 
-    // KUTE.to(path1, {
-    //   // Animate the entire container for position transition
-    //   left: `${boundingBox.left - padding}px`,
-    //   top: `${boundingBox.top - padding}px`,
-    //   width: `${boundingBox.width + padding * 2}px`,
-    //   height: `${boundingBox.height + padding * 2}px`,
-    //   duration: 500,
-    // });
   }
 
   // useEffect(() => {
