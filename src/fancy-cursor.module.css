@@ -71,7 +71,7 @@
   pointer-events: none;
 }
 
-.canvas-container svg {
+.svg-container svg {
   position: fixed;
   top: 0;
   left: 0;
