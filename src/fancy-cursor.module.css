@@ -70,10 +70,11 @@
 }
 
 .canvas-container svg {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   /* transform: translate(-50%, -50%); */
+  border: 1px solid white;
 }
 
 .cursor::before {
