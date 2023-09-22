@@ -36,7 +36,9 @@
     "@size-limit/preset-small-lib": "^9.0.0",
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
+    "@types/three": "^0.156.0",
     "husky": "^8.0.3",
+    "react": "file:../frontvalue/node_modules/react",
     "react-dom": "^18.2.0",
     "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^9.0.0",
@@ -45,6 +47,8 @@
     "typescript": "^3.9.10"
   },
   "dependencies": {
-    "kute.js": "^2.2.4"
+    "gsap": "^3.12.2",
+    "kute.js": "^2.2.4",
+    "three": "^0.156.1"
   }
 }

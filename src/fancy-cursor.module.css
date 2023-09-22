@@ -23,8 +23,8 @@
 
 .cursor {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
   width: var(--cursor-size);
   height: var(--cursor-size);
   border-radius: 50%;
@@ -32,7 +32,8 @@
   z-index: 99;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  transition-property: border-radius, opacity, background-color, transform, mix-blend-mode;
+  transition-property: border-radius, opacity, background-color, transform,
+    mix-blend-mode;
   /* transition-property: all; */
   transition-duration: 0.3s, 0.1s;
   transform-origin: center center;
@@ -53,6 +54,26 @@
   transition: transform 0.1s ease-in-out 0s;
   will-change: transform;
   border-radius: 2px;
+}
+
+.canvas-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* width: 200px;
+  height: 200px; */
+  background-color: transparent;
+  z-index: 99;
+  border-radius: none;
+  border:1px solid red;
+  /* transform: translate(-50%, -50%); */
+}
+
+.canvas-container svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* transform: translate(-50%, -50%); */
 }
 
 .cursor::before {

@@ -11,6 +11,8 @@ import {
 import KUTE from 'kute.js';
 import React from 'react';
 type CursorTypes = 'default' | 'pointer' | 'text' | 'hover' | 'drag' | 'none';
+import * as THREE from 'three';
+import gsap, { Power0 } from 'gsap';
 
 type FancyMouseProps = {
   x: number;
@@ -26,17 +28,142 @@ export type CursorRef = {
 
 const BASE_DURATION = 0.3;
 
+
 const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   { x, y, color, size = 10 },
   ref
 ) {
   const [cursorType, setCursorType] = useState<CursorTypes>('default');
   const [text, setText] = useState<string>('');
+  const [key, setKey] = useState<number>(0);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const cursorElement = cursorRef?.current;
   const focusedElementRef = useRef<any>(null);
+
+
+function createCirclePath(diameter: number): any {
+  // Create an SVG element to hold the circle
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('width', diameter.toString());
+  svg.setAttribute('height', diameter.toString());
+
+  // Create a circle element
+  const circle = document.createElementNS(svgNS, 'circle');
+  const radius = diameter / 2;
+  circle.setAttribute('cx', radius.toString());
+  circle.setAttribute('cy', radius.toString());
+  circle.setAttribute('r', radius.toString());
+  circle.setAttribute('fill', 'red');
+
+  const rect = focusedElementRef.current?.getBoundingClientRect()
+  if (!rect) return circle;
+
+  const relativeLeft = x - rect.left;
+  const relativeTop = y - rect.top;
+  
+  // const angle = Math.atan2(relativeTop, relativeLeft);
+  // const degrees = angle * (180 / Math.PI);
+  // const rotation = degrees + 90;
+  // circle.setAttribute('transform', `rotate(${rotation} ${radius} ${radius})`);
+  circle.style.left= `${relativeLeft}px`;
+  circle.style.top= `${relativeTop}px`;
+  circle.style.transform = `translate(${relativeLeft - diameter/2}px, ${relativeTop - diameter/2}px)`;
+
+  return circle;
+}
+
+  function createPathAroundUnion(element1: HTMLElement, element2: HTMLElement) {
+    const box1 = element1.getBoundingClientRect();
+    const box2 = element2.getBoundingClientRect();
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '500px');
+    const path = document.createElementNS(svgNS, 'path');
+    const boundingBox = element2.getBoundingClientRect();
+
+    // Define the path data using the bounding box of the element
+    const pathData = `
+    M ${0} ${0}
+    L ${boundingBox.width} ${0}
+    L ${boundingBox.width} ${boundingBox.height}
+    L ${0} ${boundingBox.height}
+    Z
+  `;
+
+    path.setAttribute('d', pathData);
+    path.setAttribute('stroke', 'blue'); // Change the color as needed
+    path.setAttribute('fill', 'none');
+
+    console.log('boundingBox.width', boundingBox.width);
+    console.log('boundingBox.height', boundingBox.height);
+
+    if (!canvasContainerRef.current) return;
+
+    const padding = 20;
+
+    canvasContainerRef.current.style.left = `${boundingBox.left - padding}px`;
+    canvasContainerRef.current.style.top = `${boundingBox.top - padding}px`;
+    canvasContainerRef.current.style.width = `${boundingBox.width +
+      padding * 2}px`;
+    canvasContainerRef.current.style.height = `${boundingBox.height +
+      padding * 2}px`;
+
+    svg.appendChild(path);
+    svg.style.left = `${padding}px`;
+    svg.style.top = `${padding}px`;
+    // svgContainer.appendChild(svg);
+    const pathCursor = createCirclePath(20);
+    svg.appendChild(pathCursor);
+    canvasContainerRef.current?.children[0]?.remove();
+    canvasContainerRef.current?.appendChild(svg);
+  }
+
+  // useEffect(() => {
+  //   const svgNS = 'http://www.w3.org/2000/svg';
+  //   const svg = document.createElementNS(svgNS, 'svg');
+  //   svg.setAttribute('width', '500px');
+  //   const path = document.createElementNS(svgNS, 'path');
+  //   const boundingBox = element2.getBoundingClientRect();
+
+  //   // Define the path data using the bounding box of the element
+  //   const pathData = `
+  //   M ${0} ${0}
+  //   L ${boundingBox.width} ${0}
+  //   L ${boundingBox.width} ${boundingBox.height}
+  //   L ${0} ${boundingBox.height}
+  //   Z
+  // `;
+
+  //   path.setAttribute('d', pathData);
+  //   path.setAttribute('stroke', 'blue'); // Change the color as needed
+  //   path.setAttribute('fill', 'none');
+
+  //   console.log('boundingBox.width', boundingBox.width);
+  //   console.log('boundingBox.height', boundingBox.height);
+
+  //   if (!canvasContainerRef.current) return;
+
+  //   const padding = 20;
+
+  //   canvasContainerRef.current.style.left = `${boundingBox.left - padding}px`;
+  //   canvasContainerRef.current.style.top = `${boundingBox.top - padding}px`;
+  //   canvasContainerRef.current.style.width = `${boundingBox.width +
+  //     padding * 2}px`;
+  //   canvasContainerRef.current.style.height = `${boundingBox.height +
+  //     padding * 2}px`;
+
+  //   svg.appendChild(path);
+  //   svg.style.left = `${padding}px`;
+  //   svg.style.top = `${padding}px`;
+  //   // svgContainer.appendChild(svg);
+  //   canvasContainerRef.current?.children[0]?.remove();
+  //   canvasContainerRef.current?.appendChild(svg);
+  // }, []);
 
   useEffect(() => {
     const cursorRefElement = cursorRef?.current;
@@ -63,7 +190,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       { left: x, top: y },
       { duration: 0.1, delay: 0.1, ease: 'power4' }
     ).start();
-
   }, [x, y]);
 
   const handleOnMouseMove = useCallback((e: MouseEvent) => {
@@ -126,6 +252,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         ease: 'power3',
       };
       KUTE.to(cursorRefElement, targetData, options).start();
+
+      createPathAroundUnion(cursorRefElement, targetElement);
     } else if (cursorType === 'text') {
       const targetData = {
         width: 2,
@@ -246,6 +374,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
           <span></span>
         </div>
       </div>
+      <div
+        className={`${styles['canvas-container']}`}
+        key={key}
+        ref={canvasContainerRef}
+      />
       <div className={`${styles.cursor} ${styles[cursorType]}`} ref={cursorRef}>
         <div ref={textContainerRef} className={styles['cursor-text']}>
           <span ref={textRef}>{text}</span>
