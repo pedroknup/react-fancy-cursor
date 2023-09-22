@@ -99,7 +99,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     a ${diameter / 2},${diameter / 2} 0 1,1 -${diameter},0
   `;
     path.setAttribute('d', pathData);
-    path.setAttribute('stroke', 'red'); // Change the color as needed
+    path.setAttribute('stroke', color ?? 'red'); // Change the color as needed
     path.setAttribute('fill', 'transparent');
     path.setAttribute('stroke-width', '4');
 
@@ -264,8 +264,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         console.log('CHANGED');
       }
     } else {
-      if (!isTransitioningRef.current) 
-        isTransitioningRef.current = true;
+      if (!isTransitioningRef.current) isTransitioningRef.current = true;
       KUTE.to(
         cursorRefElement,
         { left: x, top: y },
@@ -293,7 +292,13 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
   useEffect(() => {
     const cursorRefElement = cursorRef?.current;
-    if (!cursorRefElement) return;
+    // if (!cursorRefElement) return;
+
+    console.log('changed cursor type', cursorType);
+    if (cursorType !== 'pointer') {
+      console.log('different');
+      animateTextOut();
+    }
 
     if (cursorType === 'default') {
       const targetData = {
@@ -343,19 +348,16 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       const targetData = {
         width: 100,
         height: 100,
-        left: x - 50,
-        top: y - 50,
+        // left: x - 50,
+        // top: y - 50,
       };
 
       const options = {
-        duration: 100,
+        duration: 200,
         ease: 'power3',
       };
-      const tween = KUTE.to(cursorRefElement, targetData, options).start();
+      KUTE.to(cursorRefElement, targetData, options).start();
       animateTextIn();
-    }
-    if (cursorType !== 'pointer') {
-      animateTextOut();
     }
   }, [cursorType]);
 
@@ -380,16 +382,16 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     KUTE.to(
       textRefElement,
       { translateY: 0, opacity: 1 },
-      { duration: BASE_DURATION, ease: 'power3', delay: 0.2 }
+      { duration: 300, ease: 'power3', delay: 50 }
     ).start();
 
     KUTE.to(
       cursorRefElement,
       {
-        borderWidth: 0,
+        opacity: 1,
       },
       {
-        duration: BASE_DURATION,
+        duration: BASE_DURATION * 100,
         ease: 'power3',
       }
     ).start();
@@ -400,16 +402,17 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const cursorRefElement = cursorRef?.current;
     const textContainerElement = textContainerRef?.current;
 
+    console.log('trying to animate out');
     if (!textRefElement || !cursorRefElement || !textContainerElement) return;
-
+    console.log('executed', textRefElement, cursorRefElement);
     KUTE.to(
       textRefElement,
       {
         opacity: 0,
-        translateY: '100%',
+        translateY: 200,
       },
       {
-        duration: BASE_DURATION,
+        duration: BASE_DURATION * 100,
         ease: 'power3',
       }
     ).start();
@@ -417,11 +420,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     KUTE.to(
       cursorRefElement,
       {
-        borderWidth: 4,
+        opacity: 0,
       },
       {
-        duration: BASE_DURATION,
-        delay: 0.2,
+        duration: 500,
+        delay: 200,
         ease: 'power3',
       }
     );
@@ -434,11 +437,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       {text}
       <br />
       {x} - {y}
-      <div className={`${styles.cursor} ${styles[cursorType]}`}>
+      {/* <div className={`${styles.cursor} ${styles[cursorType]}`}>
         <div className={styles.cursorText}>
           <span></span>
         </div>
-      </div>
+      </div> */}
       <div
         className={`${styles['canvas-container']}`}
         key={key}
