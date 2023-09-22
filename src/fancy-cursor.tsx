@@ -13,6 +13,7 @@ import React from 'react';
 type CursorTypes = 'default' | 'pointer' | 'text' | 'hover' | 'drag' | 'none';
 import * as THREE from 'three';
 import gsap, { Power0 } from 'gsap';
+import { interpolate } from 'flubber'; //
 
 type FancyMouseProps = {
   x: number;
@@ -28,7 +29,6 @@ export type CursorRef = {
 
 const BASE_DURATION = 0.3;
 
-
 const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   { x, y, color, size = 10 },
   ref
@@ -43,38 +43,57 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   const cursorElement = cursorRef?.current;
   const focusedElementRef = useRef<any>(null);
 
+  function createCirclePath(diameter: number): any {
+    // Create an SVG element to hold the circle
 
-function createCirclePath(diameter: number): any {
-  // Create an SVG element to hold the circle
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', diameter.toString());
-  svg.setAttribute('height', diameter.toString());
+    // <svg width="100" height="100">
+    //   <path
+    //     stroke="red"
+    //     fill="transparent"
+    //     stroke-width="4"
+    //     d="
+    //     M 40, 40
+    //     a 10,10 0 1,1 20,0
+    //     a 10,10 0 1,1 -20,0
+    //     "
+    //   />
+    // </svg>;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', diameter.toString());
+    svg.setAttribute('height', diameter.toString());
+    svg.id = 'end';
 
-  // Create a circle element
-  const circle = document.createElementNS(svgNS, 'circle');
-  const radius = diameter / 2;
-  circle.setAttribute('cx', radius.toString());
-  circle.setAttribute('cy', radius.toString());
-  circle.setAttribute('r', radius.toString());
-  circle.setAttribute('fill', 'red');
+    // Create a path element
+    const path = document.createElementNS(svgNS, 'path');
 
-  const rect = focusedElementRef.current?.getBoundingClientRect()
-  if (!rect) return circle;
+    const pathData = `
+    M ${0} ${0}
+    a ${diameter / 2},${diameter / 2} 0 1,1 ${diameter},0
+    a ${diameter / 2},${diameter / 2} 0 1,1 -${diameter},0
+  `;
+    path.setAttribute('d', pathData);
+    path.setAttribute('stroke', 'red'); // Change the color as needed
+    path.setAttribute('fill', 'transparent');
+    path.setAttribute('stroke-width', '4');
 
-  const relativeLeft = x - rect.left;
-  const relativeTop = y - rect.top;
-  
-  // const angle = Math.atan2(relativeTop, relativeLeft);
-  // const degrees = angle * (180 / Math.PI);
-  // const rotation = degrees + 90;
-  // circle.setAttribute('transform', `rotate(${rotation} ${radius} ${radius})`);
-  circle.style.left= `${relativeLeft}px`;
-  circle.style.top= `${relativeTop}px`;
-  circle.style.transform = `translate(${relativeLeft - diameter/2}px, ${relativeTop - diameter/2}px)`;
+    const rect = focusedElementRef.current?.getBoundingClientRect();
+    if (!rect) return path;
 
-  return circle;
-}
+    const relativeLeft = x - rect.left;
+    const relativeTop = y - rect.top + diameter / 2;
+
+    // const angle = Math.atan2(relativeTop, relativeLeft);
+    // const degrees = angle * (180 / Math.PI);
+    // const rotation = degrees + 90;
+    // circle.setAttribute('transform', `rotate(${rotation} ${radius} ${radius})`);
+    path.style.left = `${relativeLeft}px`;
+    path.style.top = `${relativeTop}px`;
+    path.style.transform = `translate(${relativeLeft -
+      diameter / 2}px, ${relativeTop - diameter / 2}px)`;
+
+    return path;
+  }
 
   function createPathAroundUnion(element1: HTMLElement, element2: HTMLElement) {
     const box1 = element1.getBoundingClientRect();
@@ -99,9 +118,6 @@ function createCirclePath(diameter: number): any {
     path.setAttribute('stroke', 'blue'); // Change the color as needed
     path.setAttribute('fill', 'none');
 
-    console.log('boundingBox.width', boundingBox.width);
-    console.log('boundingBox.height', boundingBox.height);
-
     if (!canvasContainerRef.current) return;
 
     const padding = 20;
@@ -117,10 +133,22 @@ function createCirclePath(diameter: number): any {
     svg.style.left = `${padding}px`;
     svg.style.top = `${padding}px`;
     // svgContainer.appendChild(svg);
-    const pathCursor = createCirclePath(20);
-    svg.appendChild(pathCursor);
+    const pathCursorCircle = createCirclePath(20);
+    svg.appendChild(pathCursorCircle);
     canvasContainerRef.current?.children[0]?.remove();
     canvasContainerRef.current?.appendChild(svg);
+
+    const path1 = canvasContainerRef.current?.children[0]?.children[1];
+
+    const SVGPathValue: gsap.SVGPathValue = path?.getAttribute('d') ?? '';
+    const startSVGPathValue: gsap.SVGPathValue =
+      pathCursorCircle.getAttribute('d') ?? '';
+
+    console.log(pathCursorCircle.getAttribute('d'));
+    console.log(SVGPathValue);
+    const interpolator = interpolate(SVGPathValue, SVGPathValue);
+
+    // KUTE.to(pathCursorCircle, { path: interpolator }, { duration: 1 }).start();
   }
 
   // useEffect(() => {
