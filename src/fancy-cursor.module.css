@@ -26,7 +26,7 @@
   border-radius: 50%;
   background-color: transparent;
   z-index: 99;
-  transform: translate(-50%, -50%);
+  /* transform: translate(-100px, -100px); */
   pointer-events: none;
   transition-property: border-radius, opacity, background-color, transform,
     mix-blend-mode, width, height;

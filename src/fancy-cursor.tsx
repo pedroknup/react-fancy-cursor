@@ -178,8 +178,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const cursorRefElement = cursorRef?.current;
     if (!cursorRefElement) return;
 
-    console.log('isTransitioning', isTransitioningRef.current);
-
     if (cursorType === 'hover') {
       if (focusedElementRef.current && !isTransitioningRef.current) {
         const currentX = x;
@@ -212,8 +210,8 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
       KUTE.to(
         cursorRefElement,
-        { left: x, top: y },
-        { duration: 0.1, delay: 0.1, ease: 'power4' }
+        { left: x - 50, top: y - 50 },
+        { duration: 0.1, delay: 0.1, ease: 'power4' } //pk
       ).start();
 
       const SVG = svgElement.current;
@@ -243,17 +241,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     }
 
     if (cursorType === 'default') {
-      const targetData = {
-        width: size,
-        height: size,
-      };
-
-      const options = {
-        duration: 200,
-      };
-      const tween = KUTE.to(cursorRefElement, targetData, options);
-      tween.start();
-
       const pathStart = svgContainerRef.current?.children[0]?.children[1];
       const pathEnd = svgContainerRef.current?.children[0]?.children[0];
 
@@ -287,16 +274,20 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       };
       KUTE.to(cursorRefElement, targetData, options).start();
     } else if (cursorType === 'pointer') {
+      const fromData = {
+        scale: 0,
+      }
+      
       const targetData = {
-        width: 100,
-        height: 100,
+        translateY: -50,
+        scale: 1
       };
 
       const options = {
         duration: 200,
         ease: 'power3',
       };
-      KUTE.to(cursorRefElement, targetData, options).start();
+      KUTE.fromTo(cursorRefElement, fromData, targetData, options).start();
       animateTextIn();
     }
   }, [cursorType]);
