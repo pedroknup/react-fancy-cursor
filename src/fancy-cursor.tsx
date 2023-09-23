@@ -166,6 +166,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   }, [color]);
 
   useEffect(() => {
+    // on mouse move
     const cursorRefElement = cursorRef?.current;
     if (!cursorRefElement) return;
 
@@ -197,7 +198,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         cursorPathRef.current?.setAttribute('d', pathData);
       }
     } else {
-      if (cursorType === 'default') {
+      if (cursorType === 'default' || cursorType === 'pointer') {
         if (!isTransitioningRef.current) isTransitioningRef.current = true;
 
         KUTE.to(
