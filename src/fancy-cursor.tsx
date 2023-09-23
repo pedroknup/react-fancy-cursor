@@ -106,6 +106,11 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     if (!circlePath) return;
 
+    if (!rectPath) {
+      console.log('NOPE');
+      console.log('button client rect', buttonClientRect);
+    };
+
     const interpolator = interpolate(
       cursorPathRef.current.getAttribute('d'),
       rectPath
