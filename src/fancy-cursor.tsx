@@ -13,7 +13,7 @@ import { interpolate } from 'flubber'; //
 import { CursorTypes } from './types';
 import styles from './fancy-cursor.module.css';
 import { DebugPanel } from './debug-panel';
-import { getPathFromRect } from './svg-util';
+import { createSVGPath, getPathFromRect } from './svg-util';
 type FancyMouseProps = {
   x: number;
   y: number;
@@ -92,7 +92,13 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const relativeLeft = rect.left - xDistance * 5;
     const relativeTop = rect.top - yDistance * 5;
 
-    const rectPath = getPathFromRect(relativeLeft, relativeTop, buttonClientRect?.width, buttonClientRect?.height, 12);
+    const rectPath = getPathFromRect(
+      relativeLeft,
+      relativeTop,
+      buttonClientRect?.width,
+      buttonClientRect?.height,
+      12
+    );
 
     if (!svgContainerRef.current) return;
 
@@ -186,35 +192,43 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
           focusedElementRect.width,
           focusedElementRect.height,
           12
-        )
+        );
 
         cursorPathRef.current?.setAttribute('d', pathData);
       }
     } else {
-      if (!isTransitioningRef.current) isTransitioningRef.current = true;
+      if (cursorType === 'default') {
+        if (!isTransitioningRef.current) isTransitioningRef.current = true;
 
-      KUTE.to(
-        cursorRefElement,
-        { left: x - 50, top: y - 50 },
-        { duration: 0.1, delay: 0.1, ease: 'power4' } //pk
-      ).start();
+        KUTE.to(
+          cursorRefElement,
+          { left: x - 50, top: y - 50 },
+          { duration: 0.1, delay: 0.1, ease: 'power4' } //pk
+        ).start();
 
-      const SVG = svgElement.current;
-      if (!SVG) return;
+        const SVG = svgElement.current;
+        if (!SVG) return;
 
-      const SVGRect = SVG.getBoundingClientRect();
-      const SVGWidth = SVGRect.width;
-      const centeredLeft = x - SVGWidth / 2;
-      const centeredTop = y - SVGWidth / 2;
-      cursorPathRef.current?.style.setProperty('left', `${centeredLeft}px`);
-      cursorPathRef.current?.style.setProperty('top', `${centeredTop}px`);
-      // edit the first line of the path
-      const path = createCirclePath(20, {
-        x: x - 10,
-        y: y - 0,
-      });
+        const SVGRect = SVG.getBoundingClientRect();
+        const SVGWidth = SVGRect.width;
+        const centeredLeft = x - SVGWidth / 2;
+        const centeredTop = y - SVGWidth / 2;
+        cursorPathRef.current?.style.setProperty('left', `${centeredLeft}px`);
+        cursorPathRef.current?.style.setProperty('top', `${centeredTop}px`);
+        // edit the first line of the path
+        const path = createCirclePath(20, {
+          x: x - 10,
+          y: y - 0,
+        });
 
-      cursorPathRef.current.setAttribute('d', path.getAttribute('d'));
+        cursorPathRef.current.setAttribute('d', path.getAttribute('d'));
+      } else if (cursorType === 'text') {
+        if (isTransitioningRef.current) return;
+        const path = getPathFromRect(x, y - 8, 1, 20);
+
+        cursorPathRef.current.setAttribute('d', path);
+        cursorPathRef.current.style.setProperty('stroke-width', '1');
+      }
     }
   }, [x, y, cursorType, focusedElementRef.current, isTransitioningRef.current]);
 
@@ -223,6 +237,10 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     if (cursorType !== 'pointer') {
       animateTextOut();
+    }
+
+    if (cursorType !== 'text') {
+      cursorPathRef.current.style.setProperty('stroke-width', '4');
     }
 
     if (cursorType === 'default') {
@@ -245,25 +263,46 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         .ease(Power0.easeNone);
     } else if (cursorType === 'hover') {
       createPathAroundUnion();
-    } else if (cursorType === 'text') {
-      const targetData = {
-        width: 2,
-        height: 20,
-      };
 
-      const options = {
-        duration: 100,
-        ease: 'power3',
-      };
-      KUTE.to(cursorRefElement, targetData, options).start();
+      console.log('here');
+    } else if (cursorType === 'text') {
+      // const targetData = {
+      //   width: 2,
+      //   height: 20,
+      // };
+
+      // const options = {
+      //   duration: 100,
+      //   ease: 'power3',
+      // };
+      // KUTE.to(cursorRefElement, targetData, options).start();
+      //
+      const pathData = getPathFromRect(x, y - 8, 1, 20);
+
+      const pathCursorCircle = cursorPathRef.current?.getAttribute('d');
+      const interpolator = interpolate(pathCursorCircle ?? '', pathData);
+
+      isTransitioningRef.current = true;
+      d3.select(cursorPathRef.current)
+        .transition()
+        .attrTween('d', function() {
+          return interpolator;
+        })
+        .duration(50)
+        .ease(Power0.easeNone)
+        .on('end', () => {
+          isTransitioningRef.current = false;
+        });
+
+      cursorPathRef.current.style.setProperty('stroke-width', '1');
     } else if (cursorType === 'pointer') {
       const fromData = {
         scale: 0,
-      }
-      
+      };
+
       const targetData = {
         translateY: -50,
-        scale: 1
+        scale: 1,
       };
 
       const options = {
@@ -345,10 +384,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   return (
     <div>
       <DebugPanel x={x} y={y} type={cursorType} text={text} />
-      <div
-        className={`${styles['svg-container']}`}
-        ref={svgContainerRef}
-      />
+      <div className={`${styles['svg-container']}`} ref={svgContainerRef} />
       <div className={`${styles.cursor} ${styles[cursorType]}`} ref={cursorRef}>
         <div ref={textContainerRef} className={styles['cursor-text']}>
           <span ref={textRef}>{text}</span>

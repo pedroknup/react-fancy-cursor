@@ -1,4 +1,4 @@
-function getPathFromRect(x: number, y: number, width: number, height: number, borderRadius: number = 10) {
+function getPathFromRect(x: number, y: number, width: number, height: number, borderRadius: number = 0) {
     if (x < 0 || y < 0 || width < 0 || height < 0 || borderRadius < 0) {
       return '';
     }
@@ -45,4 +45,17 @@ function getPathFromRect(x: number, y: number, width: number, height: number, bo
     return path;
 }
 
-export { getPathFromRect };
+function createSVGPath(x: number, y: number, width: number): string {
+  // Calculate the coordinates for the path
+  const startX = x;
+  const startY = y;
+  const endX = x + width;
+  const endY = y;
+
+  // Build the SVG path string
+  const path = `M ${startX} ${startY} L ${endX} ${endY}`;
+
+  return path;
+}
+
+export { getPathFromRect, createSVGPath };
