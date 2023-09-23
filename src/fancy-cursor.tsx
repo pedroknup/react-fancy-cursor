@@ -13,6 +13,7 @@ import { interpolate } from 'flubber'; //
 import { CursorTypes } from './types';
 import styles from './fancy-cursor.module.css';
 import { DebugPanel } from './debug-panel';
+import { getPathFromRect } from './svg-util';
 type FancyMouseProps = {
   x: number;
   y: number;
@@ -74,7 +75,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   }
 
   const createPathAroundUnion = useCallback((): any => {
-    const svgNS = 'http://www.w3.org/2000/svg';
     const rect = focusedElementRef.current?.getBoundingClientRect();
     if (!rect) return null;
     const padding = 20;
@@ -92,24 +92,9 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const relativeLeft = rect.left - xDistance * 5;
     const relativeTop = rect.top - yDistance * 5;
 
-    const pathData = `
-    M ${relativeLeft} ${relativeTop}
-    L ${relativeLeft + buttonClientRect?.width} ${relativeTop}
-    L ${relativeLeft + buttonClientRect?.width} ${relativeTop +
-      buttonClientRect?.height}
-    L ${relativeLeft} ${relativeTop + buttonClientRect?.height}
-    Z`;
+    const rectPath = getPathFromRect(relativeLeft, relativeTop, buttonClientRect?.width, buttonClientRect?.height, 12);
 
     if (!svgContainerRef.current) return;
-
-    const pathElement = document.createElementNS(svgNS, 'path');
-    pathElement.setAttribute('d', pathData);
-    pathElement.setAttribute('stroke', 'transparent'); // Change the color as needed
-    pathElement.setAttribute('fill', 'transparent');
-    pathElement.setAttribute('stroke-width', '1');
-    pathElement.id = 'delete-me';
-
-    svgElement.current.appendChild(pathElement);
 
     const circlePath = cursorPathRef.current;
 
@@ -117,7 +102,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     const interpolator = interpolate(
       cursorPathRef.current.getAttribute('d'),
-      pathData
+      rectPath
     );
 
     isTransitioningRef.current = true;
@@ -195,13 +180,13 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         const relativeTop =
           focusedElementRect.top - yDistance * PARALLAX_STRENGTH;
 
-        const pathData = `
-          M ${relativeLeft} ${relativeTop}
-          L ${relativeLeft + focusedElementRect?.width} ${relativeTop}
-          L ${relativeLeft + focusedElementRect?.width} ${relativeTop +
-          focusedElementRect?.height}
-          L ${relativeLeft} ${relativeTop + focusedElementRect?.height}
-          Z`;
+        const pathData = getPathFromRect(
+          relativeLeft,
+          relativeTop,
+          focusedElementRect.width,
+          focusedElementRect.height,
+          12
+        )
 
         cursorPathRef.current?.setAttribute('d', pathData);
       }
@@ -258,8 +243,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         })
         .duration(50)
         .ease(Power0.easeNone);
-
-      svgElement.current.querySelector('#delete-me')?.remove();
     } else if (cursorType === 'hover') {
       createPathAroundUnion();
     } else if (cursorType === 'text') {
@@ -361,7 +344,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
   return (
     <div>
-      <DebugPanel x={x} y={y} type={cursorType} text={text} />
+      {/* <DebugPanel x={x} y={y} type={cursorType} text={text} /> */}
       <div
         className={`${styles['svg-container']}`}
         ref={svgContainerRef}
