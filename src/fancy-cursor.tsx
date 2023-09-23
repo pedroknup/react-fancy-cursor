@@ -342,9 +342,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const cursorRefElement = cursorRef?.current;
     const textContainerElement = textContainerRef?.current;
 
-    console.log('trying to animate out');
     if (!textRefElement || !cursorRefElement || !textContainerElement) return;
-    console.log('executed', textRefElement, cursorRefElement);
     KUTE.to(
       textRefElement,
       {

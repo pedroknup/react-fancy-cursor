@@ -17,7 +17,6 @@ const FancyCursorWrapper = ({ children, color, cursorSize }: FancyMouseWrapperPr
     if (!cursorRef.current) return;
 
     const { type, element, text } = event.detail;
-    console.log('received event', event.detail)
     cursorRef.current.setCursorType(type);
 
     cursorRef.current.setHoverElement(element);

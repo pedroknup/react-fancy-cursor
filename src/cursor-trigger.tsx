@@ -19,6 +19,7 @@ const CursorTrigger = function CursorTrigger({
   type,
 }: HoverTriggerProps) {
   const hoverTriggerRef = useRef<HTMLDivElement>(null);
+  const childrenRef = useRef<HTMLDivElement>(null);
 
   const handleOnMouseEnter = () => {
     switch (type) {
@@ -50,7 +51,9 @@ const CursorTrigger = function CursorTrigger({
 
     // Attach event listeners directly to the DOM element
     hoverTriggerRef.current.addEventListener('mouseover', handleOnMouseEnter);
+    childrenRef.current?.addEventListener('mouseover', handleOnMouseEnter);
     hoverTriggerRef.current.addEventListener('mouseout', handleOnMouseLeave);
+    childrenRef.current?.addEventListener('mouseout', handleOnMouseLeave);
 
     return () => {
       // Clean up event listeners when the component unmounts
@@ -62,6 +65,14 @@ const CursorTrigger = function CursorTrigger({
         'mouseout',
         handleOnMouseLeave
       );
+      childrenRef.current?.removeEventListener(
+        'mouseover',
+        handleOnMouseEnter
+      );
+      childrenRef.current?.removeEventListener(
+        'mouseout',
+        handleOnMouseLeave
+      );
     };
   }, [padding]);
 
@@ -69,11 +80,9 @@ const CursorTrigger = function CursorTrigger({
     <div className={styles['hover-trigger-container']}>
       <div
         className={styles['hover-trigger']}
-        // onMouseEnter={handleOnMouseEnter}
-        // onMouseLeave={handleOnMouseLeave}
         ref={hoverTriggerRef}
       ></div>
-      <div className={styles['hover-trigger-children']}>{children}</div>
+      <div className={styles['hover-trigger-children']} ref={childrenRef}>{children}</div>
     </div>
   );
 };
