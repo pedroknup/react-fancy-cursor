@@ -383,7 +383,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
   }, [cursorElement]);
 
   return (
-    <div>
+    <div className={styles.debug}>
       <DebugPanel x={x} y={y} type={cursorType} text={text} />
       <div className={`${styles['svg-container']}`} ref={svgContainerRef} />
       <div className={`${styles.cursor} ${styles[cursorType]}`} ref={cursorRef}>
