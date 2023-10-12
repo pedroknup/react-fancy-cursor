@@ -52,6 +52,7 @@
     "flubber": "github:ericbf/flubber#add-type-definitions",
     "gsap": "^3.12.2",
     "kute.js": "^2.2.4",
+    "motion": "^10.16.4",
     "three": "^0.156.1"
   }
 }

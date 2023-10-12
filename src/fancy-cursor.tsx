@@ -13,7 +13,7 @@ import { interpolate } from 'flubber'; //
 import { CursorTypes } from './types';
 import styles from './fancy-cursor.module.css';
 import { DebugPanel } from './debug-panel';
-import { createSVGPath, getPathFromRect } from './svg-util';
+import { createSVGPath, getCursorPath, getPathFromRect } from './svg-util';
 type FancyMouseProps = {
   x: number;
   y: number;
@@ -105,11 +105,6 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
     const circlePath = cursorPathRef.current;
 
     if (!circlePath) return;
-
-    if (!rectPath) {
-      console.log('NOPE');
-      console.log('button client rect', buttonClientRect);
-    };
 
     const interpolator = interpolate(
       cursorPathRef.current.getAttribute('d'),
@@ -230,7 +225,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
         cursorPathRef.current.setAttribute('d', path.getAttribute('d'));
       } else if (cursorType === 'text') {
         if (isTransitioningRef.current) return;
-        const path = getPathFromRect(x, y - 8, 1, 20);
+        const path = getCursorPath(x, y)
 
         cursorPathRef.current.setAttribute('d', path);
         cursorPathRef.current.style.setProperty('stroke-width', '1');
@@ -283,7 +278,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       // };
       // KUTE.to(cursorRefElement, targetData, options).start();
       //
-      const pathData = getPathFromRect(x, y - 8, 1, 20);
+      const pathData = getCursorPath(x, y)
 
       const pathCursorCircle = cursorPathRef.current?.getAttribute('d');
       const interpolator = interpolate(pathCursorCircle ?? '', pathData);

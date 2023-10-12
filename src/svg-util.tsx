@@ -52,4 +52,43 @@ function createSVGPath(x: number, y: number, width: number): string {
   return path;
 }
 
-export { getPathFromRect, createSVGPath };
+function getCursorPath(newX: number, newY: number): string {
+  const pathData =
+    'M9.6,17.3v13.5c0,0-1.3,3.2-5.1,3.2s-3.8,0-3.8,0 M9.6,17.3V3.9c0,0-1.3-3.2-5.1-3.2s-3.8,0-3.8,0 M9.6,17.3V3.9c0,0,1.3-3.2,5.1-3.2s3.8,0,3.8,0 M9.6,17.3v13.5c0,0,1.3,3.2,5.1,3.2s3.8,0,3.8,0 M6.1 17.3 L13.1 17.3 M20.6,19.3';
+  const commands = pathData.match(/[a-df-z]|[-+]?\d*\.?\d+/gi) || [];
+  let updatedPath = '';
+
+  let currentX = 0;
+  let currentY = 0;
+
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i];
+    const nextCommand = commands[i + 1];
+
+    if (command === 'M' || command === 'L') {
+      const x = parseFloat(nextCommand);
+      const y = parseFloat(commands[i + 2]);
+
+      const updatedX = x + newX;
+      const updatedY = y + newY;
+
+      updatedPath += `${command}${updatedX.toFixed(1)},${updatedY.toFixed(1)}`;
+
+      currentX = updatedX;
+      currentY = updatedY;
+
+      i += 2;
+    } else {
+      updatedPath += command;
+    }
+
+    if (nextCommand === 'M' || nextCommand === 'm') {
+      updatedPath += ' ';
+    }
+  }
+
+  console.log('to return', updatedPath);
+
+  return updatedPath;
+}
+export { getPathFromRect, createSVGPath, getCursorPath };
