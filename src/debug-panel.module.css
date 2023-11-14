@@ -1,0 +1,16 @@
+.debug-panel {
+  display: block;
+  flex-direction: column;
+  position: fixed;
+  padding: 2rem;
+  top: 0;
+  left: 0;
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  width: 14rem;
+  height: 8rem; 
+  font-size: 1.5rem;
+  aspect-ratio: 1;
+  z-index: 100;
+}

@@ -1,0 +1,21 @@
+.hover-trigger {
+  --hover-trigger-padding: 0px;
+  display: flex;
+  position: absolute;
+  left: calc(var(--hover-trigger-padding) * -1);
+  top: calc(var(--hover-trigger-padding) * -1);
+  width: calc(100% + calc(var(--hover-trigger-padding, 0) * 2));
+  height: calc(100% + calc(var(--hover-trigger-padding, 0) * 2));
+  z-index: 1;
+  /* background-color: rgba(255, 0, 0, 0.5); */
+}
+
+.hover-trigger-container {
+  position: relative;
+}
+
+.hover-trigger-children,
+.hover-trigger-children > * {
+  z-index: 2;
+  position: relative;
+}
