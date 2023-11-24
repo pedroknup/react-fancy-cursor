@@ -115,7 +115,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
     d3.select(cursorPathRef.current)
       .transition()
-      .attrTween('d', function() {
+      .attrTween('d', function () {
         return interpolator;
       })
       .duration(100)
@@ -257,7 +257,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
       d3.select(pathEnd)
         .transition()
-        .attrTween('d', function() {
+        .attrTween('d', function () {
           return interpolator;
         })
         .duration(50)
@@ -285,7 +285,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
       isTransitioningRef.current = true;
       d3.select(cursorPathRef.current)
         .transition()
-        .attrTween('d', function() {
+        .attrTween('d', function () {
           return interpolator;
         })
         .duration(50)
@@ -383,7 +383,7 @@ const FancyCursor = forwardRef<CursorRef, FancyMouseProps>(function FancyCursor(
 
   return (
     <div className={styles.debug}>
-      {process.env.NODE_ENV === "development" && <DebugPanel x={x} y={y} type={cursorType} text={text} /> }
+      {process.env.NODE_ENV === "development" && <DebugPanel x={x} y={y} type={cursorType} text={text} />}
       <div className={`${styles['svg-container']}`} ref={svgContainerRef} />
       <div className={`${styles.cursor} ${styles[cursorType]}`} ref={cursorRef}>
         <div ref={textContainerRef} className={styles['cursor-text']}>
