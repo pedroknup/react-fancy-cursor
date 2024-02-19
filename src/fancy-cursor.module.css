@@ -47,14 +47,15 @@
 
 .svg-container {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  height: 200px; 
+  top: 0%;
+  left: 0%;
+  height: 200px;
   background-color: transparent;
   z-index: 99;
   border-radius: none;
-  border: 1px solid red;
+  border: none;
   pointer-events: none;
+  display: block;
 }
 
 .svg-container svg {
