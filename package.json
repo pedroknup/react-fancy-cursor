@@ -1,5 +1,5 @@
 {
-  "version": "0.0.3",
+  "version": "0.1.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -39,7 +39,6 @@
     "@types/react-dom": "^18.2.7",
     "@types/three": "^0.156.0",
     "husky": "^8.0.3",
-    "react": "^18.2.0",
     "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^9.0.0",
     "tsdx": "^0.14.1",
