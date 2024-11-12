@@ -77,13 +77,13 @@ const CursorTrigger = function CursorTrigger({
   }, [padding]);
 
   return (
-    <div className={styles['hover-trigger-container']}>
-      <div
+    <span className={styles['hover-trigger-container']}>
+      <span
         className={styles['hover-trigger']}
         ref={hoverTriggerRef}
-      ></div>
-      <div className={styles['hover-trigger-children']} ref={childrenRef}>{children}</div>
-    </div>
+      ></span>
+      <span className={styles['hover-trigger-children']} ref={childrenRef}>{children}</span>
+    </span>
   );
 };
 
