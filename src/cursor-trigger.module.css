@@ -11,6 +11,7 @@
 }
 
 .hover-trigger-container {
+  display: block;
   position: relative;
 }
 
